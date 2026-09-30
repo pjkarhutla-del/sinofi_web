@@ -13,74 +13,100 @@ on:
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: siaga_karhutla
+          POSTGRES_USER: siaga
+          POSTGRES_PASSWORD: siaga
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d test_db"
-          --health-interval 10s
+          --health-cmd "pg_isready -U siaga -d siaga_karhutla"
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
 
-      # 1. Checkout repository
+      # ==========================================
+      # 1. Checkout source code
+      # ==========================================
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
+      # ==========================================
       # 2. Setup Python
+      # ==========================================
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
 
+      # ==========================================
       # 3. Install dependencies
+      # ==========================================
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # ==========================================
       # 4. Environment variables
-      - name: Set environment variables
+      # ==========================================
+      - name: Set Django environment
         run: |
-          echo "DJANGO_SETTINGS_MODULE=config.settings" >> $GITHUB_ENV
-          echo "DB_NAME=test_db" >> $GITHUB_ENV
-          echo "DB_USER=postgres" >> $GITHUB_ENV
-          echo "DB_PASSWORD=postgres" >> $GITHUB_ENV
-          echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
-          echo "DB_PORT=5432" >> $GITHUB_ENV
+          echo "DJANGO_SETTINGS_MODULE=siaga.settings" >> $GITHUB_ENV
+          echo "DJANGO_SECRET_KEY=github-actions-test-secret-key" >> $GITHUB_ENV
+          echo "DJANGO_DEBUG=1" >> $GITHUB_ENV
+          echo "DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1" >> $GITHUB_ENV
 
-      # 5. Django check
+          echo "POSTGRES_DB=siaga_karhutla" >> $GITHUB_ENV
+          echo "POSTGRES_USER=siaga" >> $GITHUB_ENV
+          echo "POSTGRES_PASSWORD=siaga" >> $GITHUB_ENV
+          echo "POSTGRES_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "POSTGRES_PORT=5432" >> $GITHUB_ENV
+
+          echo "SIAGA_PUBLIC_READ=0" >> $GITHUB_ENV
+
+          echo "SIPONGI_TIMEOUT=60" >> $GITHUB_ENV
+          echo "HOTSPOT_STORE_CONFIDENCE=high,medium" >> $GITHUB_ENV
+
+      # ==========================================
+      # 5. Django system check
+      # ==========================================
       - name: Django check
         run: |
           python manage.py check
 
-      # 6. Migration check
+      # ==========================================
+      # 6. Check migrations
+      # ==========================================
       - name: Check migrations
         run: |
           python manage.py makemigrations --check --dry-run
 
+      # ==========================================
       # 7. Run migrations
+      # ==========================================
       - name: Run migrations
         run: |
-          python manage.py migrate
+          python manage.py migrate --noinput
 
-      # 8. Run tests
+      # ==========================================
+      # 8. Run Django tests
+      # ==========================================
       - name: Run tests
         run: |
           python manage.py test
 
-      # 9. Collect static
+      # ==========================================
+      # 9. Collect static files
+      # ==========================================
       - name: Collect static files
         run: |
           python manage.py collectstatic --noinput
