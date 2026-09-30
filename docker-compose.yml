@@ -1,0 +1,36 @@
+# Menjalankan seluruh sistem: docker compose up -d --build
+# Pertama kali:  docker compose exec web sh -c "python manage.py migrate && python manage.py import_kawasan && python manage.py setup_roles && python manage.py createsuperuser"
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: siaga_karhutla
+      POSTGRES_USER: siaga
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?isi POSTGRES_PASSWORD di .env}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siaga -d siaga_karhutla"]
+      interval: 5s
+      retries: 10
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    ports: ["8000:8000"]
+  # Sinkronisasi hotspot SIPONGI otomatis tiap 30 menit
+  hotspot-sync:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    command: sh -c "while true; do python manage.py sync_hotspot --days 2 || true; sleep 1800; done"
+volumes:
+  pgdata:

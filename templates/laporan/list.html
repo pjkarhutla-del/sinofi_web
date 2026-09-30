@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Daftar Laporan{% endblock %}
+{% block content %}
+<section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+  <h2 class="text-xl font-bold text-slate-900">Daftar Laporan</h2>
+  <form method="get" class="my-4 flex flex-wrap items-end gap-2">
+    <input name="q" value="{{ f.q }}" placeholder="Cari kawasan / UPT…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+    <select name="pulau" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">Semua pulau</option>{% for p in pulau_list %}<option {% if f.pulau == p %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
+    <select name="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">Semua status</option>{% for s in statuses %}<option {% if f.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+    <label class="text-xs font-semibold text-slate-500">Dari<input type="date" name="dari" value="{{ f.dari }}" class="block rounded-lg border border-slate-300 px-3 py-2 text-sm"></label>
+    <label class="text-xs font-semibold text-slate-500">Sampai<input type="date" name="sampai" value="{{ f.sampai }}" class="block rounded-lg border border-slate-300 px-3 py-2 text-sm"></label>
+    <button class="rounded-lg bg-forest-700 px-4 py-2 text-sm font-semibold text-white">Cari</button>
+    <a href="{% url 'laporan_list' %}" class="px-2 py-2 text-sm text-slate-500 underline">Reset</a>
+  </form>
+  <p class="mb-2 text-xs text-slate-500">{{ page.paginator.count }} baris laporan (satu baris = satu titik).</p>
+  <div class="overflow-x-auto rounded-lg border border-slate-100">
+    <table class="w-full text-left text-xs">
+      <thead class="bg-slate-100 text-slate-600"><tr><th class="p-2">Tanggal</th><th class="p-2">Kawasan</th><th class="p-2">Status</th><th class="p-2 text-right">Luas (ha)</th><th class="p-2">Koordinat</th><th class="p-2">Personel</th><th class="p-2"></th></tr></thead>
+      <tbody>
+      {% for l in page %}<tr class="border-t border-slate-100">
+        <td class="whitespace-nowrap p-2">{{ l.tanggal|date:"d M Y" }}</td>
+        <td class="p-2"><div class="font-semibold">{{ l.kawasan.nkws }}</div><div class="text-slate-500">{{ l.kawasan.nupt }}</div></td>
+        <td class="p-2">{{ l.status }}</td>
+        <td class="p-2 text-right">{{ l.luas }}</td><td class="p-2 text-slate-500">{{ l.lat|stringformat:".5f" }}, {{ l.lon|stringformat:".5f" }}</td><td class="p-2">{{ l.personel|truncatechars:30 }}</td>
+        <td class="p-2 text-right">{% if perms.laporan.change_laporan %}<a class="font-semibold text-forest-700 hover:underline" href="{% url 'laporan_update' l.pk %}">Ubah</a>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="7" class="p-8 text-center text-slate-400">Tidak ada laporan yang cocok.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-4 flex items-center justify-between text-sm">
+    <span class="text-slate-500">Halaman {{ page.number }} dari {{ page.paginator.num_pages }}</span>
+    <div class="flex gap-2">
+      {% if page.has_previous %}<a class="rounded-lg border px-3 py-1.5" href="?{{ querystring }}&page={{ page.previous_page_number }}">← Sebelumnya</a>{% endif %}
+      {% if page.has_next %}<a class="rounded-lg border px-3 py-1.5" href="?{{ querystring }}&page={{ page.next_page_number }}">Berikutnya →</a>{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

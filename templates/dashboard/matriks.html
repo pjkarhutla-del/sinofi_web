@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Matriks{% endblock %}
+{% block content %}
+<section class="relative rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+  <div class="mb-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div>
+      <h3 class="text-lg font-bold text-slate-900">Matriks Kawasan × Tanggal</h3>
+      <p class="mt-1 text-xs leading-5 text-slate-500">Dikelompokkan per pulau. Klik sel berwarna untuk detail laporan{% if perms.laporan.add_laporan %}; klik <b>+</b> pada sel kosong untuk mengisi laporan baru{% endif %}.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <select id="pulauFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+        <option value="">Semua pulau</option>{% for p in pulau_options %}<option>{{ p }}</option>{% endfor %}
+      </select>
+      <input id="kawasanSearch" type="search" placeholder="Cari kawasan / UPT…" autocomplete="off" class="min-w-[230px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+      <button id="expandAll" type="button" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Show All</button>
+      <button id="collapseAll" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Hide All</button>
+    </div>
+  </div>
+
+  <div class="mb-4 flex flex-col gap-3 rounded-xl bg-forest-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div><p class="text-xs font-bold uppercase tracking-wide text-forest-700">Rentang matriks</p>
+      <p class="mt-0.5 text-sm font-semibold text-forest-900">{{ m.start|date:"j M Y" }} – {{ m.end|date:"j M Y" }}</p></div>
+    <div class="flex flex-wrap gap-2">
+      {% if m.prev_start %}<a href="?start={{ m.prev_start|date:'Y-m-d' }}" class="rounded-lg border border-forest-500/40 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">← Sebelumnya</a>{% endif %}
+      <a href="{% url 'matriks' %}" class="rounded-lg bg-forest-700 px-3 py-2 text-sm font-semibold text-white hover:bg-forest-800">Hari ini</a>
+      {% if m.next_start %}<a href="?start={{ m.next_start|date:'Y-m-d' }}" class="rounded-lg border border-forest-500/40 bg-white px-3 py-2 text-sm font-semibold text-forest-800 hover:bg-forest-100">Berikutnya →</a>{% endif %}
+    </div>
+  </div>
+
+  <div class="matrix-scroll rounded-xl border border-slate-200">
+    <table id="matrixTable" class="matrix-table min-w-max w-full text-left text-xs">
+      <thead><tr>
+        <th class="sticky-nupt p-3 font-bold">NUPT</th><th class="sticky-nkws p-3 font-bold">NKWS</th>
+        {% for d in m.dates %}<th class="p-2 text-center font-bold {% if d == today %}bg-forest-100{% endif %}" title="{{ d|date:'Y-m-d' }}">{{ d|date:"d M" }}</th>{% endfor %}
+      </tr></thead>
+      <tbody>
+      {% for g in m.groups %}
+        <tr class="pulau-row" data-pulau="{{ g.npulau }}"><td colspan="{{ m.dates|length|add:2 }}" class="p-2 text-xs">▾ {{ g.npulau }} <span class="font-normal text-forest-700">({{ g.items|length }} kawasan)</span></td></tr>
+        {% for it in g.items %}
+        <tr data-pulau="{{ g.npulau }}" data-search="{{ it.nkws|lower }} {{ it.nupt|lower }}">
+          <td class="sticky-nupt p-2 text-slate-500">{{ it.nupt }}</td><td class="sticky-nkws p-2 font-semibold">{{ it.nkws }}</td>
+          {% for c in it.cells %}
+            {% if c.status %}
+              <td class="matrix-cell {{ c.css }} cursor-pointer {% if c.date == today %}is-today{% endif %}" data-kid="{{ it.kawasan_id }}" data-tanggal="{{ c.date|date:'Y-m-d' }}" title="{{ c.status }}{% if c.count > 1 %} ({{ c.count }} titik){% endif %} — klik untuk detail">{{ c.symbol }}{% if c.count > 1 %}<sup class="ml-0.5 text-[9px]">{{ c.count }}</sup>{% endif %}</td>
+            {% else %}
+              <td class="matrix-cell matrix-empty {% if c.date == today %}is-today{% endif %}">{% if perms.laporan.add_laporan %}<a class="grid h-full w-full place-items-center text-xl font-light" href="{% url 'laporan_create' %}?kawasan={{ it.kawasan_id }}&tanggal={{ c.date|date:'Y-m-d' }}" title="Isi laporan untuk tanggal ini">+</a>{% endif %}</td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      {% empty %}
+        <tr><td class="p-8 text-center text-slate-400" colspan="3">Belum ada laporan. Tambahkan laporan pertama lewat menu Isi Laporan.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-3 text-xs text-slate-500">Hanya kawasan yang pernah memiliki laporan yang ditampilkan. Untuk kawasan baru gunakan menu Isi Laporan.</p>
+</section>
+
+{% include "dashboard/_detail_modal.html" %}
+{% endblock %}
+{% block scripts %}
+{% load static %}
+<script src="{% static 'js/detail-modal.js' %}"></script>
+<script src="{% static 'js/matriks.js' %}"></script>
+{% endblock %}

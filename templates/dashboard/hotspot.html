@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Monitor Hotspot{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
+    <div><p class="text-sm font-semibold text-forest-700">MONITOR HOTSPOT SIPONGI</p>
+      <h2 class="text-2xl font-bold text-slate-900">Hotspot dalam Kawasan Hutan Konservasi</h2>
+      <p class="mt-1 text-sm text-slate-500">Titik High &amp; Medium confidence dicocokkan dengan batas KSA, KPA, dan TB.
+        {% if last_sync %}Sinkronisasi terakhir: <b>{{ last_sync.finished_at|date:"j M Y H:i" }}</b>.{% else %}<span class="text-amber-700">Belum ada sinkronisasi — jalankan <code>python manage.py sync_hotspot</code>.</span>{% endif %}</p></div>
+    <div class="flex flex-wrap items-end gap-2">
+      <label class="text-xs font-semibold text-slate-500">Dari<input id="fDari" type="date" value="{{ dari|date:'Y-m-d' }}" class="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"></label>
+      <label class="text-xs font-semibold text-slate-500">Sampai<input id="fSampai" type="date" value="{{ sampai|date:'Y-m-d' }}" class="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"></label>
+      <button id="fApply" class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Terapkan filter</button>
+      {% if user.is_staff %}<button id="btnSync" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">↻ Sinkron SIPONGI</button>{% endif %}
+    </div>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-4">
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 md:col-span-1">
+      <h3 class="text-sm font-bold">Hotspot Hutan Konservasi</h3>
+      <table class="mt-2 w-full text-sm"><tr><td class="font-semibold">High</td><td class="text-right text-lg font-extrabold text-red-600" id="cHigh">{{ summary.high }}</td></tr>
+        <tr><td class="font-semibold">Medium</td><td class="text-right text-lg font-extrabold text-amber-600" id="cMed">{{ summary.medium }}</td></tr>
+        <tr class="border-t border-dashed"><td class="font-bold">Total</td><td class="text-right text-xl font-extrabold" id="cTotal">{{ summary.total }}</td></tr></table>
+      <div class="mt-4 space-y-2">
+        <p class="text-xs font-semibold text-slate-500">Ekspor data hotspot aktif</p>
+        <div class="grid grid-cols-3 gap-2">
+          <a id="exXlsx" class="rounded-lg bg-emerald-600 px-2 py-2 text-center text-xs font-bold text-white hover:bg-emerald-700" href="#">.XLSX</a>
+          <a id="exCsv" class="rounded-lg bg-emerald-600 px-2 py-2 text-center text-xs font-bold text-white hover:bg-emerald-700" href="#">.CSV</a>
+          <a id="exShp" class="rounded-lg bg-emerald-600 px-2 py-2 text-center text-xs font-bold text-white hover:bg-emerald-700" href="#">.SHP</a>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" id="exAll"> Sertakan hotspot di luar kawasan</label>
+      </div>
+    </div>
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 md:col-span-3">
+      <div class="mb-3 flex flex-wrap gap-2 border-b pb-2">
+        <button class="tab-btn rounded bg-forest-700 px-3 py-1.5 text-xs font-bold text-white" data-tab="top">Top 10 Kawasan (High &amp; Medium)</button>
+        <button class="tab-btn rounded bg-slate-200 px-3 py-1.5 text-xs font-bold" data-tab="weekly">Tren 7 Hari Terakhir per UPT</button>
+      </div>
+      <div id="tab-top"><div class="relative h-64"><canvas id="chTop"></canvas></div></div>
+      <div id="tab-weekly" class="hidden">
+        <select id="selUpt" class="mb-2 w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">— Pilih UPT —</option>{% for u in upt_list %}<option>{{ u }}</option>{% endfor %}</select>
+        <div class="relative h-56"><canvas id="chWeekly"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <div id="map" class="map-box relative z-0 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100"></div>
+    <p id="mapStatus" class="mt-2 text-xs text-slate-500"></p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="{% static 'js/hotspot.js' %}"></script>
+{% endblock %}

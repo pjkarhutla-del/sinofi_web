@@ -1,0 +1,4 @@
+# Sinkronisasi hotspot SIPONGI tiap 30 menit (tanpa Docker). Sesuaikan path.
+*/30 * * * * cd /opt/siaga_karhutla && /opt/siaga_karhutla/venv/bin/python manage.py sync_hotspot --days 2 >> /var/log/siaga_sync.log 2>&1
+# Cadangan database harian pukul 02:00
+0 2 * * * pg_dump -U siaga -Fc siaga_karhutla > /var/backups/siaga_$(date +\%F).dump

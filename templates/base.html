@@ -1,0 +1,60 @@
+{% load static %}<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}SIAGA Karhutla{% endblock %} — SIAGA Karhutla</title>
+  <link rel="icon" href="{% static 'img/logo-kk.png' %}" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{forest:{50:'#effaf3',100:'#d8f2e1',500:'#287a4d',600:'#1e613d',700:'#174d31',800:'#103a26',900:'#0b291b'}}}}};</script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{% static 'css/siaga.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800">
+<header class="sticky top-0 z-40 border-b border-forest-800 bg-forest-900 text-white shadow-lg">
+  <div class="mx-auto flex max-w-[1800px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <a href="{% url 'dashboard' %}" class="flex items-center gap-3">
+      <img src="{% static 'img/logo-kehutanan.png' %}" alt="" class="h-10 w-10 object-contain">
+      <img src="{% static 'img/logo-kk.png' %}" alt="" class="h-10 w-10 object-contain">
+      <div><h1 class="text-lg font-bold tracking-wide">SIAGA KARHUTLA</h1>
+      <p class="text-xs text-emerald-100">Sistem Informasi &amp; Aksi Pengendalian Kebakaran Hutan dan Lahan</p></div>
+    </a>
+    <div class="flex items-center gap-3 text-xs text-emerald-100">
+      {% if user.is_authenticated %}
+        <span>● {{ user.get_full_name|default:user.username }}</span>
+        {% if user.is_staff %}<a class="underline" href="{% url 'admin:index' %}">Admin</a>{% endif %}
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="rounded-full border border-emerald-400/40 px-3 py-1 hover:bg-white/10">Keluar</button></form>
+      {% else %}
+        <a class="rounded-full border border-emerald-400/40 px-3 py-1 hover:bg-white/10" href="{% url 'login' %}">Masuk</a>
+      {% endif %}
+    </div>
+  </div>
+  {% if user.is_authenticated or PUBLIC_READ %}
+  <nav class="mx-auto flex max-w-[1800px] gap-1 overflow-x-auto px-4 sm:px-6" aria-label="Navigasi utama">
+    {% url 'dashboard' as u_dash %}{% url 'matriks' as u_mat %}{% url 'peta' as u_peta %}{% url 'hotspot' as u_hs %}{% url 'laporan_list' as u_list %}{% url 'laporan_create' as u_new %}
+    <a href="{{ u_dash }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold {% if request.path == u_dash %}border-emerald-400 text-white{% else %}border-transparent text-emerald-100 hover:text-white{% endif %}">Dashboard</a>
+    <a href="{{ u_mat }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold {% if request.path == u_mat %}border-emerald-400 text-white{% else %}border-transparent text-emerald-100 hover:text-white{% endif %}">Matriks</a>
+    <a href="{{ u_peta }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold {% if request.path == u_peta %}border-emerald-400 text-white{% else %}border-transparent text-emerald-100 hover:text-white{% endif %}">Peta Kejadian</a>
+    <a href="{{ u_hs }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold {% if request.path == u_hs %}border-emerald-400 text-white{% else %}border-transparent text-emerald-100 hover:text-white{% endif %}">Monitor Hotspot</a>
+    <a href="{{ u_list }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold {% if request.path == u_list %}border-emerald-400 text-white{% else %}border-transparent text-emerald-100 hover:text-white{% endif %}">Daftar Laporan</a>
+    {% if perms.laporan.add_laporan %}<a href="{{ u_new }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold {% if request.path == u_new %}border-emerald-400 text-white{% else %}border-transparent text-emerald-100 hover:text-white{% endif %}">Isi Laporan</a>{% endif %}
+  </nav>
+  {% endif %}
+</header>
+
+{% if messages %}
+<div class="mx-auto max-w-[1800px] space-y-2 px-4 pt-4 sm:px-6">
+  {% for m in messages %}
+  <div class="rounded-lg border px-4 py-3 text-sm {% if m.level_tag == 'error' %}border-red-200 bg-red-50 text-red-800{% elif m.level_tag == 'warning' %}border-amber-300 bg-amber-50 text-amber-900{% else %}border-emerald-200 bg-forest-50 text-forest-900{% endif %}">{{ m }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<main class="mx-auto max-w-[1800px] p-4 sm:p-6">{% block content %}{% endblock %}</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/common.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

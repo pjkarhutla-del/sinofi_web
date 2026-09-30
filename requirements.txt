@@ -1,0 +1,10 @@
+Django>=5.2,<5.3
+psycopg[binary]>=3.2
+numpy>=1.26
+shapely>=2.0
+openpyxl>=3.1
+pyshp>=2.3
+requests>=2.32
+python-dotenv>=1.0
+gunicorn>=22.0
+whitenoise>=6.7

@@ -1,0 +1,22 @@
+.matrix-scroll{max-height:70vh;overflow:auto}
+.matrix-table{border-collapse:separate;border-spacing:0}
+.matrix-table th,.matrix-table td{border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
+.matrix-table thead th{position:sticky;top:0;z-index:20;background:#f1f5f9}
+.matrix-table .sticky-nupt{position:sticky;left:0;z-index:15;background:#fff;min-width:150px;max-width:190px}
+.matrix-table .sticky-nkws{position:sticky;left:150px;z-index:15;background:#fff;min-width:190px;box-shadow:2px 0 0 #cbd5e1}
+.matrix-table thead .sticky-nupt,.matrix-table thead .sticky-nkws{z-index:30;background:#f1f5f9}
+.matrix-cell{width:52px;min-width:52px;height:34px;text-align:center;font-weight:900;font-size:15px}
+.matrix-empty{background:#f8fafc;color:#17603c}.matrix-empty:hover{background:#d8f2e1}
+.matrix-cell.is-today{outline:2px solid #174d31;outline-offset:-2px}
+.status-upaya{background:#dc2626!important;color:#fff!important}
+.status-groundcheck{background:#eab308!important;color:#3d2700!important}
+.status-padam{background:#2563eb!important;color:#fff!important}
+.status-konfirmasi{background:#9333ea!important;color:#fff!important}
+.status-false{background:#6b7280!important;color:#fff!important}
+.pulau-row td{position:sticky;left:0;background:#d8f2e1;color:#103a26;font-weight:800;cursor:pointer}
+.siaga-triangle-marker{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:20px solid #dc2626;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.kawasan-label{background:transparent!important;border:none!important;box-shadow:none!important;color:#00334e;font-weight:800;text-align:center;white-space:normal!important;width:120px!important;margin-left:-60px!important;line-height:1.1;pointer-events:none;text-shadow:-1.5px -1.5px 0 #fff,1.5px -1.5px 0 #fff,-1.5px 1.5px 0 #fff,1.5px 1.5px 0 #fff}
+.map-box{height:68vh;min-height:420px}
+.legend{background:rgba(255,255,255,.95);padding:8px 12px;line-height:22px;border-radius:6px;box-shadow:0 0 12px rgba(0,0,0,.25);font-size:12px}
+.legend i{width:14px;height:14px;float:left;margin:4px 8px 0 0;border-radius:50%}
+.modal-open{overflow:hidden}

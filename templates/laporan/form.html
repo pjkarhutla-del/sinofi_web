@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if obj %}Ubah Laporan{% else %}Isi Laporan{% endif %}{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div><p class="text-sm font-semibold text-forest-700">ENTRI LAPORAN</p>
+    <h2 class="text-2xl font-bold text-slate-900">Isi Laporan Pengendalian Karhutla</h2>
+    <p class="mt-1 text-sm text-slate-500">Simpan laporan baru atau perbarui laporan yang dipilih dari matriks/peta.</p></div>
+  <div class="grid gap-6 xl:grid-cols-[.85fr_1.35fr]">
+    <aside class="h-fit rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 xl:sticky xl:top-36">
+      <h3 class="font-bold text-slate-900">Tempel Teks Laporan</h3>
+      <p class="mt-1 text-xs leading-5 text-slate-500">Parser mendeteksi tanggal, kawasan, koordinat (urutan lintang/bujur dikenali otomatis), status, luas, personel, upaya, rencana, kendala, dan kebutuhan.</p>
+      <textarea id="rawText" rows="18" class="mt-4 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm leading-6" placeholder="Sabtu, 26 September 2026&#10;Lokasi: TN Sebangau, BKSDA Kalteng&#10;Koordinat: -2.321, 113.921&#10;Status: Upaya Pemadaman&#10;Luas terbakar: 12 Ha&#10;Personel: 8 Manggala Agni dan 12 MPA&#10;Upaya: pemadaman darat dan sekat bakar&#10;Rencana tindak lanjut: patroli ulang besok"></textarea>
+      <button type="button" id="parseBtn" class="mt-4 w-full rounded-xl bg-forest-700 px-4 py-3 font-bold text-white hover:bg-forest-800">✦ Pisahkan &amp; Isi Form</button>
+      <p id="parserNotes" class="mt-4 rounded-xl border border-emerald-100 bg-forest-50 p-3 text-xs leading-5 text-forest-900">Verifikasi hasil parser sebelum menyimpan.</p>
+    </aside>
+
+    <form method="post" id="reportForm" class="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">{% csrf_token %}
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div><h3 class="text-lg font-bold text-slate-900">Isi Laporan Manual</h3><p class="text-xs text-slate-500">Dapat terisi dari parser atau sel kosong matriks.</p></div>
+        {% if obj %}<span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Mode edit laporan</span>{% endif %}
+      </div>
+      {% if form.non_field_errors or formset.non_form_errors %}<div class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ form.non_field_errors }}{{ formset.non_form_errors }}</div>{% endif %}
+
+      <fieldset><legend class="mb-3 font-semibold text-forest-800">Identitas Laporan</legend>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block text-sm font-medium">Tanggal {{ form.tanggal }}{{ form.tanggal.errors }}</label>
+          <label class="block text-sm font-medium">Pulau
+            <select id="selPulau" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select></label>
+          <label class="block text-sm font-medium">NUPT
+            <select id="selUpt" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select></label>
+          <label class="block text-sm font-medium">NKWS
+            <select id="selKws" name="kawasan" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select>{{ form.kawasan.errors }}</label>
+        </div>
+      </fieldset>
+
+      <fieldset class="border-t border-slate-100 pt-5">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><legend class="font-semibold text-forest-800">Titik Koordinat &amp; Status</legend>
+          <button type="button" id="addPoint" class="rounded-lg border border-forest-600 px-3 py-1.5 text-sm font-semibold text-forest-700 hover:bg-forest-50">+ Tambah titik</button></div>
+        {{ formset.management_form }}
+        <div id="points" class="space-y-3">
+          {% for f in formset %}
+          <div class="point-row grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
+            <label class="text-xs font-semibold">Lintang {{ f.lat }}</label>
+            <label class="text-xs font-semibold">Bujur {{ f.lon }}</label>
+            <label class="text-xs font-semibold">Status {{ f.status }}</label>
+            <label class="text-xs font-semibold">Luas (ha)<div class="flex gap-1">{{ f.luas }}<button type="button" class="remove-point rounded-lg px-2 text-lg text-red-600" title="Hapus titik">×</button></div></label>
+            {% if f.errors or f.non_field_errors %}<div class="text-xs text-red-600 sm:col-span-4">{{ f.non_field_errors }}{% for e in f.errors.values %}{{ e }}{% endfor %}</div>{% endif %}
+          </div>{% endfor %}
+        </div>
+        <template id="pointTpl"><div class="point-row grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
+          <label class="text-xs font-semibold">Lintang {{ formset.empty_form.lat }}</label>
+          <label class="text-xs font-semibold">Bujur {{ formset.empty_form.lon }}</label>
+          <label class="text-xs font-semibold">Status {{ formset.empty_form.status }}</label>
+          <label class="text-xs font-semibold">Luas (ha)<div class="flex gap-1">{{ formset.empty_form.luas }}<button type="button" class="remove-point rounded-lg px-2 text-lg text-red-600" title="Hapus titik">×</button></div></label></div></template>
+      </fieldset>
+
+      <fieldset class="border-t border-slate-100 pt-5"><legend class="mb-3 font-semibold text-forest-800">Tindak Lanjut Operasional</legend>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block text-sm font-medium">Upaya {{ form.upaya }}</label>
+          <label class="block text-sm font-medium">Rencana tindak lanjut {{ form.rencana }}</label>
+          <label class="block text-sm font-medium">Jumlah personel {{ form.personel }}</label>
+          <label class="block text-sm font-medium">Kendala {{ form.kendala }}</label>
+          <label class="block text-sm font-medium sm:col-span-2">Kebutuhan / saran {{ form.kebutuhan }}</label>
+          <label class="block text-sm font-medium sm:col-span-2">Penegakan hukum (Gakkum) {{ form.gakkum }}</label>
+          <label class="block text-sm font-medium sm:col-span-2">Narasi laporan lengkap {{ form.laporan }}</label>
+        </div>
+      </fieldset>
+      <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
+        {% if obj %}<a href="{% url 'matriks' %}" class="rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700">Batal edit</a>{% endif %}
+        <button class="rounded-xl bg-forest-700 px-5 py-3 font-bold text-white shadow hover:bg-forest-800">{% if obj %}Perbarui laporan{% else %}Simpan laporan{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{ kawasan_tree|json_script:"kawasanTree" }}
+<script id="selectedKawasan" type="application/json">{% if form.kawasan.value %}{{ form.kawasan.value|escapejs|default:'null' }}{% else %}null{% endif %}</script>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/form.js' %}"></script>{% endblock %}

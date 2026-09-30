@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
+    <div>
+      <p class="text-sm font-semibold text-forest-700">DASHBOARD OPERASIONAL</p>
+      <h2 class="text-2xl font-bold text-slate-900">Ringkasan Pengendalian Karhutla</h2>
+      <p class="mt-1 text-sm text-slate-500">Akumulasi laporan kejadian, kondisi penanganan, dan titik hotspot SIPONGI.</p>
+    </div>
+    <p class="rounded-lg bg-white px-3 py-2 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200">Diperbarui: {{ now|date:"j M Y H:i" }} WIB</p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <p class="text-sm font-medium text-slate-500">Total Kejadian Karhutla</p>
+      <div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold">{{ stats.total_kejadian }}</p>
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{{ stats.total_baris }} laporan</span></div>
+      <p class="mt-3 text-xs text-slate-500">Dari {{ stats.jumlah_chain }} rangkaian status kawasan.</p>
+    </article>
+    <article class="rounded-2xl border border-orange-100 bg-orange-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-orange-800">Kawasan Terdampak</p>
+      <p class="mt-3 text-3xl font-bold text-orange-900">{{ stats.kawasan_terdampak }}</p>
+      <p class="mt-3 text-xs text-orange-800">Kawasan unik dengan minimal satu laporan Upaya Pemadaman atau Sudah Padam.</p>
+    </article>
+    <article class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-red-800">Upaya Pemadaman Aktif</p>
+      <div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-red-700">{{ active|length }}</p><span class="text-xs font-bold text-red-700">♨ Prioritas</span></div>
+      <p class="mt-3 text-xs text-red-800">Gelombang operasional yang belum ditutup status akhir.</p>
+    </article>
+    <article class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-blue-800">Kejadian Sudah Padam</p>
+      <div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-blue-700">{{ stats.sudah_padam }}</p><span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-bold text-blue-800">{{ stats.persen_padam }}%</span></div>
+      <p class="mt-3 text-xs text-blue-800">Penyelesaian dari total kejadian Karhutla.</p>
+    </article>
+    <article class="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm">
+      <p class="text-sm font-medium text-amber-800">Groundcheck &amp; Konfirmasi</p>
+      <div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-amber-700">{{ stats.pending_verifikasi }}</p><span class="text-xs font-bold text-amber-800">{{ stats.groundcheck_pending }} + {{ stats.konfirmasi_pending }}</span></div>
+      <p class="mt-3 text-xs text-amber-800">{{ stats.groundcheck_pending }} groundcheck • {{ stats.konfirmasi_pending }} perlu konfirmasi.</p>
+    </article>
+    <a href="{% url 'hotspot' %}" class="rounded-2xl border border-rose-100 bg-white p-5 shadow-sm hover:ring-2 hover:ring-rose-200">
+      <p class="text-sm font-medium text-rose-800">Hotspot SIPONGI (dalam kawasan)</p>
+      <div class="mt-3 flex items-end justify-between"><p class="text-3xl font-bold text-rose-700">{{ hotspot.total }}</p><span class="text-xs font-bold text-rose-800">{{ hotspot_range.0|date:"d M" }}–{{ hotspot_range.1|date:"d M" }}</span></div>
+      <p class="mt-3 text-xs text-rose-800">{{ hotspot.high }} High • {{ hotspot.medium }} Medium • {{ stats.false_hotspot }} false hotspot laporan.</p>
+    </a>
+  </div>
+
+  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div><h3 class="font-bold text-slate-900">Rincian Status Laporan</h3><p class="text-xs text-slate-500">Warna status konsisten pada kartu, matriks, peta, dan formulir.</p></div>
+      <div class="flex flex-wrap gap-2">{% for s in STATUS_LEGEND %}<span class="inline-flex items-center gap-1 rounded-full {{ s.badge }} px-2 py-1 text-xs font-bold text-white">{{ s.icon }} {{ s.name }}</span>{% endfor %}</div>
+    </div>
+    <div class="flex h-4 overflow-hidden rounded-full bg-slate-100">{% for b in breakdown %}<div title="{{ b.status }}: {{ b.count }}" style="width:{{ b.percent|stringformat:'s' }}%;background:{{ b.color }}"></div>{% endfor %}</div>
+    <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {% for b in breakdown %}<div class="rounded-lg bg-slate-50 p-3"><div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-600">{{ b.status }}</span><span class="text-lg font-bold">{{ b.count }}</span></div><p class="text-xs text-slate-400">{{ b.percent }}%</p></div>{% endfor %}
+    </div>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-2">
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div><h3 class="font-bold text-slate-900">Rincian Pemadaman Aktif</h3><p class="text-xs text-slate-500">Lokasi dengan gelombang operasional terbuka yang memuat Upaya Pemadaman.</p></div>
+        <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">{{ active|length }} lokasi</span>
+      </div>
+      <div class="max-h-80 overflow-auto rounded-lg border border-slate-100">
+        <table class="w-full text-left text-xs" data-sortable>
+          <thead class="sticky top-0 bg-slate-100 text-slate-600"><tr>
+            <th class="cursor-pointer p-2" data-type="text">NUPT / NKWS ↕</th><th class="cursor-pointer p-2" data-type="text">Status terakhir ↕</th>
+            <th class="cursor-pointer p-2" data-type="text">Sejak ↕</th><th class="cursor-pointer p-2 text-right" data-type="num">Durasi ↓</th></tr></thead>
+          <tbody>
+          {% for a in active %}<tr class="border-t border-slate-100">
+            <td class="p-2"><div class="font-semibold">{{ a.nkws }}</div><div class="text-slate-500">{{ a.nupt }}</div></td>
+            <td class="p-2"><span class="rounded-full px-2 py-0.5 font-bold text-white {% if a.status_terakhir == 'Upaya Pemadaman' %}bg-red-600{% elif a.status_terakhir == 'Proses Groundcheck' %}bg-amber-500{% else %}bg-purple-600{% endif %}">{{ a.status_terakhir }}</span></td>
+            <td class="p-2" data-sort="{{ a.sejak_tanggal|date:'Y-m-d' }}">{{ a.sejak_tanggal|date:"d M Y" }}</td>
+            <td class="p-2 text-right font-bold" data-sort="{{ a.jumlah_hari }}">{{ a.jumlah_hari }} hari</td></tr>
+          {% empty %}<tr><td colspan="4" class="p-6 text-center text-slate-400">Tidak ada pemadaman aktif.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div><h3 class="font-bold text-slate-900">Perlu Update</h3><p class="text-xs text-slate-500">Status terbuka yang belum diperbarui hingga {{ today|date:"j M Y" }}.</p></div>
+        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">{{ pending|length }} lokasi</span>
+      </div>
+      <div class="max-h-80 overflow-auto rounded-lg border border-slate-100">
+        <table class="w-full text-left text-xs" data-sortable>
+          <thead class="sticky top-0 bg-slate-100 text-slate-600"><tr>
+            <th class="cursor-pointer p-2" data-type="text">NUPT / NKWS ↕</th><th class="cursor-pointer p-2" data-type="text">Status ↕</th><th class="cursor-pointer p-2 text-right" data-type="num">Terlambat ↓</th></tr></thead>
+          <tbody>
+          {% for p in pending %}<tr class="border-t border-slate-100">
+            <td class="p-2"><a class="font-semibold text-forest-700 hover:underline" href="{% url 'laporan_create' %}?kawasan={{ p.kawasan_id }}&tanggal={{ today|date:'Y-m-d' }}">{{ p.nkws }}</a><div class="text-slate-500">{{ p.nupt }}</div></td>
+            <td class="p-2">{{ p.status_terakhir }}<div class="text-slate-400">terakhir {{ p.sejak_tanggal|date:"d M" }}</div></td>
+            <td class="p-2 text-right font-bold text-amber-700" data-sort="{{ p.jumlah_hari_terlambat }}">{{ p.jumlah_hari_terlambat }} hari</td></tr>
+          {% empty %}<tr><td colspan="3" class="p-6 text-center text-slate-400">Semua laporan sudah diperbarui.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <div><h3 class="font-bold text-slate-900">Hotspot Belum Ada Laporan</h3>
+        <p class="text-xs text-slate-500">Kawasan dengan hotspot High/Medium ({{ hotspot_range.0|date:"d M" }}–{{ hotspot_range.1|date:"d M Y" }}) namun belum ada laporan pada rentang itu. Pekerjaan konfirmasi yang belum dilakukan.</p></div>
+      <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">{{ unreported|length }} kawasan</span>
+    </div>
+    <div class="max-h-72 overflow-auto rounded-lg border border-slate-100">
+      <table class="w-full text-left text-xs">
+        <thead class="sticky top-0 bg-slate-100 text-slate-600"><tr><th class="p-2">Kawasan</th><th class="p-2">UPT</th><th class="p-2 text-right">High</th><th class="p-2 text-right">Medium</th>{% if perms.laporan.add_laporan %}<th class="p-2"></th>{% endif %}</tr></thead>
+        <tbody>
+        {% for u in unreported %}<tr class="border-t border-slate-100"><td class="p-2 font-semibold">{{ u.nkws }}</td><td class="p-2 text-slate-500">{{ u.nupt }}</td>
+          <td class="p-2 text-right font-bold text-red-600">{{ u.high }}</td><td class="p-2 text-right font-bold text-amber-600">{{ u.medium }}</td>
+          {% if perms.laporan.add_laporan %}<td class="p-2 text-right"><a class="rounded-lg border border-forest-600 px-2 py-1 font-semibold text-forest-700 hover:bg-forest-50" href="{% url 'laporan_create' %}?kawasan={{ u.kawasan_id }}&tanggal={{ today|date:'Y-m-d' }}">Isi laporan</a></td>{% endif %}</tr>
+        {% empty %}<tr><td colspan="5" class="p-6 text-center text-slate-400">Semua kawasan bertitik hotspot sudah punya laporan.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+/* Urut tabel di sisi klien (kolom pakai data-sort bila ada) */
+document.querySelectorAll('table[data-sortable]').forEach((t) => {
+  t.querySelectorAll('thead th').forEach((th, i) => th.addEventListener('click', () => {
+    const asc = th.dataset.dir !== 'asc'; th.dataset.dir = asc ? 'asc' : 'desc';
+    const rows = [...t.tBodies[0].rows].filter((r) => r.cells.length > 1);
+    const val = (r) => { const c = r.cells[i]; const v = c.dataset.sort ?? c.textContent.trim(); return th.dataset.type === 'num' ? parseFloat(v) || 0 : v.toLowerCase(); };
+    rows.sort((a, b) => (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0) * (asc ? 1 : -1));
+    rows.forEach((r) => t.tBodies[0].appendChild(r));
+  }));
+});
+</script>
+{% endblock %}
